@@ -218,8 +218,10 @@ const waitForDeploymentToStart = async ({
         environment,
       });
 
+      console.log(deployments.data.slice(10).map((d) => d.creator.login))
+
       const deployment =
-        deployments.data.length > 0 &&
+      deployments.data.length > 0 &&
         deployments.data.find((deployment) => {
           return deployment.creator.login === actorName;
         });
@@ -230,11 +232,14 @@ const waitForDeploymentToStart = async ({
 
       throw new Error(`no ${actorName} deployment found`);
     } catch (e) {
+      console.error(e);
+
       console.log(
         `Could not find any deployments for actor ${actorName}, retrying (attempt ${
           i + 1
         } / ${iterations})`
       );
+
       await wait(checkIntervalInMilliseconds);
     }
   }

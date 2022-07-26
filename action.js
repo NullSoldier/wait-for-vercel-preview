@@ -210,42 +210,41 @@ const waitForDeploymentToStart = async ({
   );
 
   for (let i = 0; i < iterations; i++) {
-    try {
-      const deployments = await octokit.rest.repos.listDeployments({
+    const deployments = await octokit.rest.repos.listDeployments({
+      owner,
+      repo,
+      sha,
+      environment,
+    });
+
+    if(deployments.data.length > 0) {
+      console.log(deployments.data.slice(10).map((d) => d.creator.login))
+    } else {
+      console.log('No deployments', {
         owner,
         repo,
         sha,
         environment,
+      })
+    }
+
+    const deployment =
+    deployments.data.length > 0 &&
+      deployments.data.find((deployment) => {
+        return deployment.creator.login === actorName;
       });
 
-      if(deployments.data.length > 0) {
-        console.log(deployments.data.slice(10).map((d) => d.creator.login))
-      } else {
-        console.log('No deployments')
-      }
-
-      const deployment =
-      deployments.data.length > 0 &&
-        deployments.data.find((deployment) => {
-          return deployment.creator.login === actorName;
-        });
-
-      if (deployment) {
-        return deployment;
-      }
-
-      throw new Error(`no ${actorName} deployment found`);
-    } catch (e) {
-      console.error(e);
-
-      console.log(
-        `Could not find any deployments for actor ${actorName}, retrying (attempt ${
-          i + 1
-        } / ${iterations})`
-      );
-
-      await wait(checkIntervalInMilliseconds);
+    if (deployment) {
+      return deployment;
     }
+
+    console.log(
+      `Could not find any deployments for actor ${actorName}, retrying (attempt ${
+        i + 1
+      } / ${iterations})`
+    );
+
+    await wait(checkIntervalInMilliseconds);
   }
 
   return null;

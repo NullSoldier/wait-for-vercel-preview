@@ -224,8 +224,14 @@ const waitForDeploymentToStart = async ({
         environment,
       });
 
+      if(deployments.data.length > 0) {
+        console.log(deployments.data.slice(10).map((d) => d.creator.login))
+      } else {
+        console.log('No deployments')
+      }
+
       const deployment =
-        deployments.data.length > 0 &&
+      deployments.data.length > 0 &&
         deployments.data.find((deployment) => {
           return deployment.creator.login === actorName;
         });
@@ -236,11 +242,14 @@ const waitForDeploymentToStart = async ({
 
       throw new Error(`no ${actorName} deployment found`);
     } catch (e) {
+      console.error(e);
+
       console.log(
         `Could not find any deployments for actor ${actorName}, retrying (attempt ${
           i + 1
         } / ${iterations})`
       );
+
       await wait(checkIntervalInMilliseconds);
     }
   }
@@ -326,7 +335,7 @@ const run = async () => {
       sha: sha,
       environment: ENVIRONMENT,
       actorName: 'vercel[bot]',
-      maxTimeout: MAX_TIMEOUT / 2,
+      maxTimeout: MAX_TIMEOUT,
       checkIntervalInMilliseconds: CHECK_INTERVAL_IN_MS,
     });
 
@@ -7847,8 +7856,9 @@ RedirectableRequest.prototype._processResponse = function (response) {
     var redirectUrlParts = url.parse(redirectUrl);
     Object.assign(this._options, redirectUrlParts);
 
-    // Drop the confidential headers when redirecting to another domain
-    if (!(redirectUrlParts.host === currentHost || isSubdomainOf(redirectUrlParts.host, currentHost))) {
+    // Drop confidential headers when redirecting to another scheme:domain
+    if (redirectUrlParts.protocol !== currentUrlParts.protocol ||
+       !isSameOrSubdomain(redirectUrlParts.host, currentHost)) {
       removeMatchingHeaders(/^(?:authorization|cookie)$/i, this._options.headers);
     }
 
@@ -8014,7 +8024,10 @@ function abortRequest(request) {
   request.abort();
 }
 
-function isSubdomainOf(subdomain, domain) {
+function isSameOrSubdomain(subdomain, domain) {
+  if (subdomain === domain) {
+    return true;
+  }
   const dot = subdomain.length - domain.length - 1;
   return dot > 0 && subdomain[dot] === "." && subdomain.endsWith(domain);
 }

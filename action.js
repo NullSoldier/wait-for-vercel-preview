@@ -218,7 +218,11 @@ const waitForDeploymentToStart = async ({
         environment,
       });
 
-      console.log(deployments.data.slice(10).map((d) => d.creator.login))
+      if(deployments.data.length > 0) {
+        console.log(deployments.data.slice(10).map((d) => d.creator.login))
+      } else {
+        console.log('No deployments')
+      }
 
       const deployment =
       deployments.data.length > 0 &&
